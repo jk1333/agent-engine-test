@@ -1,0 +1,11 @@
+staging_project_id = "sandbox-373102"
+prod_project_id = "sandbox2-450109"
+cicd_runner_project_id = "sandbox-373102"
+region = "asia-northeast1"
+repository_name = "agent-engine-test"
+repository_owner = "jk1333"
+host_connection_name = "git-agent-engine-test"
+create_cb_connection = true
+create_repository = true
+github_app_installation_id = "90782373"
+github_pat_secret_id = "git-agent-engine-test-github-oauthtoken-a548c2"
