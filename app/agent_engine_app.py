@@ -213,6 +213,7 @@ def deploy_agent_engine_app(
 
     # Check if an agent with this name already exists
     existing_agents = list(client.agent_engines.list())
+    logging.info(f"Existing agents: {existing_agents}")
     matching_agents = [
         agent
         for agent in existing_agents
