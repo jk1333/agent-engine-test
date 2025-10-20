@@ -10,7 +10,8 @@ dependencies = [
     "opentelemetry-exporter-gcp-trace>=1.9.0,<2.0.0",
     "google-cloud-logging>=3.12.0,<4.0.0",
     "google-cloud-aiplatform[evaluation,agent-engines]>=1.118.0,<2.0.0",
-    "protobuf>=6.31.1,<7.0.0"
+    "protobuf>=6.31.1,<7.0.0",
+    "pg8000"
 ]
 
 requires-python = ">=3.10,<3.13"

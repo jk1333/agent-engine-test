@@ -34,7 +34,8 @@ steps:
           --project ${_STAGING_PROJECT_ID} \
           --location ${_REGION} \
           --service-account ${_APP_SA_EMAIL_STAGING} \
-          --set-env-vars="COMMIT_SHA=${COMMIT_SHA}"
+          --set-env-vars="COMMIT_SHA=${COMMIT_SHA}" \
+          --db-url="postgresql+pg8000://postgres:1234@10.31.2.3:5432"
     env:
       - 'PATH=/usr/local/bin:/usr/bin:~/.local/bin'
 

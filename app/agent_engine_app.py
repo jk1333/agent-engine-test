@@ -37,6 +37,9 @@ from app.utils.gcs import create_bucket_if_not_exists
 from app.utils.tracing import CloudTraceLoggingSpanExporter
 from app.utils.typing import Feedback
 
+import functools
+from google.adk.sessions import DatabaseSessionService #VertexAiSessionService, InMemorySessionService
+from google.adk.sessions import VertexAiSessionService
 
 class AgentEngineApp(AdkApp):
     def set_up(self) -> None:
@@ -108,6 +111,11 @@ class AgentEngineApp(AdkApp):
     default=None,
     help="Service account email to use for the agent engine",
 )
+@click.option(
+    "--db-url",
+    default=None,
+    help="Database URL for the agent engine",
+)
 def deploy_agent_engine_app(
     project: str | None,
     location: str,
@@ -116,6 +124,7 @@ def deploy_agent_engine_app(
     extra_packages: tuple[str, ...],
     set_env_vars: str | None,
     service_account: str | None,
+    db_url: str | None,
 ) -> AgentEngine:
     """Deploy the agent engine app to Vertex AI."""
     # Parse environment variables if provided
@@ -148,17 +157,35 @@ def deploy_agent_engine_app(
         project=project,
         location=location,
     )
-    vertexai.init(project=project, location=location)
+
+    # Set location for Gemini api
+    vertexai.init(project=project, location="global")
 
     # Read requirements
     with open(requirements_file) as f:
         requirements = f.read().strip().split("\n")
+
+    #Added following config for db based session and tracing
+    if db_url == "VertexAiSessionService":
+        #Following config for VAI Session console
+        session_service = functools.partial(
+            VertexAiSessionService,
+            project=project,
+            location=location
+        )
+    else:
+        session_service = functools.partial(
+            DatabaseSessionService,
+            db_url=db_url
+        )
 
     agent_engine = AgentEngineApp(
         agent=root_agent,
         artifact_service_builder=lambda: GcsArtifactService(
             bucket_name=artifacts_bucket_name
         ),
+        session_service_builder = session_service,
+        enable_tracing=True
     )
 
     # Set worker parallelism to 1
