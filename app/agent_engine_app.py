@@ -41,6 +41,15 @@ import functools
 from google.adk.sessions import DatabaseSessionService #VertexAiSessionService, InMemorySessionService
 from google.adk.sessions import VertexAiSessionService
 
+def get_localip():
+    import socket
+    try:
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        print(f"############### Your Local IP Address is: {local_ip}")
+    except socket.gaierror:
+        print("################ Could not determine local IP address.")
+
 class AgentEngineApp(AdkApp):
     def set_up(self) -> None:
         """Set up logging and tracing for the agent engine app."""
