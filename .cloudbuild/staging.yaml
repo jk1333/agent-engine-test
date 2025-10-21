@@ -115,3 +115,4 @@ logsBucket: gs://${PROJECT_ID}-agent-engine-test-logs/build-logs
 options:
   substitutionOption: ALLOW_LOOSE
   defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
+  workerPool: 'projects/${_STAGING_PROJECT_ID}/locations/${_REGION}/workerPools/internal-build'
