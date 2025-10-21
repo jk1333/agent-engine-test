@@ -149,6 +149,7 @@ def deploy_agent_engine_app(
     ║                                                           ║
     ╚═══════════════════════════════════════════════════════════╝
     """)
+    get_localip()
 
     logging.basicConfig(level=logging.INFO)
     extra_packages_list = list(extra_packages)
