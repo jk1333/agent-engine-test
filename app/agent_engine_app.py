@@ -41,20 +41,109 @@ import functools
 from google.adk.sessions import DatabaseSessionService #VertexAiSessionService, InMemorySessionService
 from google.adk.sessions import VertexAiSessionService
 
-def get_localip():
-    import socket
-    try:
-        hostname = socket.gethostname()
-        local_ip = socket.gethostbyname(hostname)
-        print(f"############### Your Local IP Address is: {local_ip}")
-    except socket.gaierror:
-        print("################ Could not determine local IP address.")
+from google.adk.memory.base_memory_service import BaseMemoryService
+from google.adk.memory.base_memory_service import SearchMemoryResponse
+from google.adk.memory.memory_entry import MemoryEntry
+from typing_extensions import override
+from google.genai import types
+from typing import Optional
+from google.adk.sessions.session import Session
+
+class CustomMemoryBankService(BaseMemoryService):
+  """Implementation of the BaseMemoryService using Vertex AI Memory Bank."""
+
+  def __init__(
+      self,
+      project: Optional[str] = None,
+      location: Optional[str] = None,
+      agent_engine_id: Optional[str] = None,
+  ):
+    self._project = project
+    self._location = location
+    self._agent_engine_id = agent_engine_id
+
+  @override
+  async def add_session_to_memory(self, session: Session):
+    if not self._agent_engine_id:
+      raise ValueError('Agent Engine ID is required for Memory Bank.')
+
+    events = []
+    for event in session.events:
+      if self._should_filter_out_event(event.content):
+        continue
+      if event.content:
+        events.append({
+            'content': event.content.model_dump(exclude_none=True, mode='json')
+        })
+    if events:
+      client = self._get_api_client()
+      print(f"[CustomMemoryBankService] Generating memory...")
+      operation = client.agent_engines.memories.generate(
+          name='reasoningEngines/' + self._agent_engine_id,
+          direct_contents_source={'events': events},
+          scope={
+              'app_name': session.app_name,
+              'user_id': session.user_id,
+          },
+          config={'wait_for_completion': True},
+      )
+      print(f"[CustomMemoryBankService] {operation}")
+    else:
+      print('[CustomMemoryBankService] No events to add to memory.')
+
+  @override
+  async def search_memory(self, *, app_name: str, user_id: str, query: str):
+    if not self._agent_engine_id:
+      raise ValueError('Agent Engine ID is required for Memory Bank.')
+
+    client = self._get_api_client()
+    retrieved_memories_iterator = client.agent_engines.memories.retrieve(
+        name='reasoningEngines/' + self._agent_engine_id,
+        scope={
+            'app_name': app_name,
+            'user_id': user_id,
+        },
+        similarity_search_params={
+            'search_query': query,
+        },
+    )
+
+    print('Search memory response received.')
+
+    memory_events = []
+    for retrieved_memory in retrieved_memories_iterator:
+      # TODO: add more complex error handling
+      print('Retrieved memory: %s', retrieved_memory)
+      memory_events.append(
+          MemoryEntry(
+              author='user',
+              content=types.Content(
+                  parts=[types.Part(text=retrieved_memory.memory.fact)],
+                  role='user',
+              ),
+              timestamp=retrieved_memory.memory.update_time.isoformat(),
+          )
+      )
+    return SearchMemoryResponse(memories=memory_events)
+  
+  def _get_api_client(self):
+    return vertexai.Client(project=self._project, location=self._location)
+  
+  def _should_filter_out_event(self, content: types.Content) -> bool:
+    """Returns whether the event should be filtered out."""
+    if not content or not content.parts:
+        return True
+    for part in content.parts:
+        if part.text or part.inline_data or part.file_data:
+            return False
+    return True
 
 class AgentEngineApp(AdkApp):
     def set_up(self) -> None:
         """Set up logging and tracing for the agent engine app."""
-        import logging
-
+        #Update memory_bank to point agent engine
+        #self._tmpl_attrs["memory_service_builder"]._agent_engine_id = os.environ.get("GOOGLE_CLOUD_AGENT_ENGINE_ID")
+        import logging        
         super().set_up()
         logging.basicConfig(level=logging.INFO)
         logging_client = google_cloud_logging.Client()
@@ -67,6 +156,11 @@ class AgentEngineApp(AdkApp):
         )
         provider.add_span_processor(processor)
         trace.set_tracer_provider(provider)
+        self._tmpl_attrs["memory_service"] = CustomMemoryBankService(
+            os.environ.get("GOOGLE_CLOUD_PROJECT"),
+            os.environ.get("GOOGLE_CLOUD_LOCATION"),
+            os.environ.get("GOOGLE_CLOUD_AGENT_ENGINE_ID")
+        )
 
     def register_feedback(self, feedback: dict[str, Any]) -> None:
         """Collect and log feedback."""
@@ -81,7 +175,6 @@ class AgentEngineApp(AdkApp):
         operations = super().register_operations()
         operations[""] = operations.get("", []) + ["register_feedback"]
         return operations
-
 
 @click.command()
 @click.option(
@@ -137,6 +230,7 @@ def deploy_agent_engine_app(
 ) -> AgentEngine:
     """Deploy the agent engine app to Vertex AI."""
     # Parse environment variables if provided
+
     env_vars = parse_env_vars(set_env_vars)
 
     if not project:
@@ -149,7 +243,7 @@ def deploy_agent_engine_app(
     ║                                                           ║
     ╚═══════════════════════════════════════════════════════════╝
     """)
-    get_localip()
+    #get_localip()
     print(f"Connecting to: {db_url}")
 
     logging.basicConfig(level=logging.INFO)
@@ -169,8 +263,8 @@ def deploy_agent_engine_app(
         location=location,
     )
 
-    # Set location for Gemini api
-    vertexai.init(project=project, location="global")
+    # Set location for Gemini api, for memory, only us-central1 supports
+    vertexai.init(project=project, location="us-central1")
 
     # Read requirements
     with open(requirements_file) as f:
@@ -196,6 +290,11 @@ def deploy_agent_engine_app(
             bucket_name=artifacts_bucket_name
         ),
         session_service_builder = session_service,
+        #memory_service_builder = functools.partial(
+        #    CustomMemoryBankService,
+        #    project=project,
+        #    location=location,
+        #),
         enable_tracing=True
     )
 
@@ -245,8 +344,7 @@ def deploy_agent_engine_app(
     write_deployment_metadata(remote_agent)
     print_deployment_success(remote_agent, location, project)
 
-    return remote_agent
-
+    return
 
 if __name__ == "__main__":
     deploy_agent_engine_app()
