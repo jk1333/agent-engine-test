@@ -85,7 +85,10 @@ class CustomMemoryBankService(BaseMemoryService):
               'app_name': session.app_name,
               'user_id': session.user_id,
           },
-          config={'wait_for_completion': False},
+          config={
+             "disable_consolidation": True,     #Disable consolidate to existing memory
+             'wait_for_completion': False
+             },
       )
       #print(f"[CustomMemoryBankService] {operation}")
     else:
@@ -113,7 +116,7 @@ class CustomMemoryBankService(BaseMemoryService):
     memory_events = []
     for retrieved_memory in retrieved_memories_iterator:
       # TODO: add more complex error handling
-      #print('[CustomMemoryBankService] Retrieved memory: %s', retrieved_memory)
+      print('[CustomMemoryBankService] Retrieved memory: %s', retrieved_memory)
       memory_events.append(
           MemoryEntry(
               author='user',
@@ -138,6 +141,7 @@ class CustomMemoryBankService(BaseMemoryService):
             return False
     return True
 
+#Configuration for AgentEngine specific configuration, memory_bank, trace and so on
 class AgentEngineApp(AdkApp):
     def set_up(self) -> None:
         """Set up logging and tracing for the agent engine app."""
@@ -145,7 +149,7 @@ class AgentEngineApp(AdkApp):
         import logging        
         super().set_up()
 
-        #TODO: manually update engine_id memory service after created,
+        #TODO: manually update engine_id of memory service after created,
         self._tmpl_attrs["memory_service"]._agent_engine_id = os.environ.get("GOOGLE_CLOUD_AGENT_ENGINE_ID")
         
         logging.basicConfig(level=logging.INFO)
@@ -154,7 +158,7 @@ class AgentEngineApp(AdkApp):
         provider = TracerProvider()
         processor = export.BatchSpanProcessor(
             CloudTraceLoggingSpanExporter(
-                project_id=os.environ.get("GOOGLE_CLOUD_PROJECT")
+                project_id=os.environ.get("GOOGLE_CLOUD_PROJECT"),
             )
         )
         provider.add_span_processor(processor)

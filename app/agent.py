@@ -17,7 +17,6 @@ import os
 from zoneinfo import ZoneInfo
 
 import google.auth
-from google import adk
 from google.adk.agents import Agent
 from google.adk.tools.preload_memory_tool import preload_memory_tool
 
@@ -71,5 +70,5 @@ root_agent = Agent(
         get_current_time, 
         preload_memory_tool
     ],
-    after_agent_callback=auto_save_session_to_memory_callback,
+    after_agent_callback=auto_save_session_to_memory_callback,  #Call memory_bank every invoke
 )
