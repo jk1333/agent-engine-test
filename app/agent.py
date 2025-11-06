@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 import google.auth
 from google import adk
 from google.adk.agents import Agent
-#from google.adk.agents.callback_context import CallbackContext
+from google.adk.tools.preload_memory_tool import preload_memory_tool
 
 _, project_id = google.auth.default()
 os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
@@ -60,15 +60,7 @@ def get_current_time(query: str) -> str:
 
 async def auto_save_session_to_memory_callback(callback_context):
     ctx = callback_context._invocation_context
-    print(f"\n[Callback] Save session to memorybank using ID {ctx.session.id} ...")
-    try:
-        #print(ctx.memory_service)  #By default, it is vertexaimemorybank service
-        await ctx.memory_service.add_session_to_memory(
-            session=ctx.session
-        )
-        print(f"\n[Callback] {ctx.session.id} saved")
-    except Exception as e:
-        print(f"[Callback] Memorybank failed: {e}")
+    await ctx.memory_service.add_session_to_memory(session = ctx.session)
 
 root_agent = Agent(
     name="root_agent",
@@ -77,7 +69,7 @@ root_agent = Agent(
     tools=[
         get_weather, 
         get_current_time, 
-        adk.tools.preload_memory_tool.PreloadMemoryTool()
+        preload_memory_tool
     ],
     after_agent_callback=auto_save_session_to_memory_callback,
 )

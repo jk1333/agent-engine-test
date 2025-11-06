@@ -24,7 +24,7 @@ from google.adk.artifacts import GcsArtifactService
 from google.cloud import logging as google_cloud_logging
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider, export
-from vertexai._genai.types import AgentEngine, AgentEngineConfig
+from vertexai._genai.types import AgentEngine, AgentEngineConfigDict
 from vertexai.agent_engines.templates.adk import AdkApp
 
 from app.agent import root_agent
@@ -85,9 +85,9 @@ class CustomMemoryBankService(BaseMemoryService):
               'app_name': session.app_name,
               'user_id': session.user_id,
           },
-          config={'wait_for_completion': True},
+          config={'wait_for_completion': False},
       )
-      print(f"[CustomMemoryBankService] {operation}")
+      #print(f"[CustomMemoryBankService] {operation}")
     else:
       print('[CustomMemoryBankService] No events to add to memory.')
 
@@ -96,6 +96,8 @@ class CustomMemoryBankService(BaseMemoryService):
     if not self._agent_engine_id:
       raise ValueError('Agent Engine ID is required for Memory Bank.')
 
+    print('[CustomMemoryBankService] Search memory received.')
+    
     client = self._get_api_client()
     retrieved_memories_iterator = client.agent_engines.memories.retrieve(
         name='reasoningEngines/' + self._agent_engine_id,
@@ -108,12 +110,10 @@ class CustomMemoryBankService(BaseMemoryService):
         },
     )
 
-    print('Search memory response received.')
-
     memory_events = []
     for retrieved_memory in retrieved_memories_iterator:
       # TODO: add more complex error handling
-      print('Retrieved memory: %s', retrieved_memory)
+      #print('[CustomMemoryBankService] Retrieved memory: %s', retrieved_memory)
       memory_events.append(
           MemoryEntry(
               author='user',
@@ -142,9 +142,12 @@ class AgentEngineApp(AdkApp):
     def set_up(self) -> None:
         """Set up logging and tracing for the agent engine app."""
         #Update memory_bank to point agent engine
-        #self._tmpl_attrs["memory_service_builder"]._agent_engine_id = os.environ.get("GOOGLE_CLOUD_AGENT_ENGINE_ID")
         import logging        
         super().set_up()
+
+        #TODO: manually update engine_id memory service after created,
+        self._tmpl_attrs["memory_service"]._agent_engine_id = os.environ.get("GOOGLE_CLOUD_AGENT_ENGINE_ID")
+        
         logging.basicConfig(level=logging.INFO)
         logging_client = google_cloud_logging.Client()
         self.logger = logging_client.logger(__name__)
@@ -156,12 +159,8 @@ class AgentEngineApp(AdkApp):
         )
         provider.add_span_processor(processor)
         trace.set_tracer_provider(provider)
-        self._tmpl_attrs["memory_service"] = CustomMemoryBankService(
-            os.environ.get("GOOGLE_CLOUD_PROJECT"),
-            os.environ.get("GOOGLE_CLOUD_LOCATION"),
-            os.environ.get("GOOGLE_CLOUD_AGENT_ENGINE_ID")
-        )
 
+    #Custom function to expose
     def register_feedback(self, feedback: dict[str, Any]) -> None:
         """Collect and log feedback."""
         feedback_obj = Feedback.model_validate(feedback)
@@ -290,11 +289,11 @@ def deploy_agent_engine_app(
             bucket_name=artifacts_bucket_name
         ),
         session_service_builder = session_service,
-        #memory_service_builder = functools.partial(
-        #    CustomMemoryBankService,
-        #    project=project,
-        #    location=location,
-        #),
+        memory_service_builder = functools.partial(
+            CustomMemoryBankService,
+            project=project,
+            location=location,
+        ),
         enable_tracing=True
     )
 
@@ -304,7 +303,7 @@ def deploy_agent_engine_app(
     # Common configuration for both create and update operations
     labels: dict[str, str] = {}
 
-    config = AgentEngineConfig(
+    config = AgentEngineConfigDict(
         display_name=agent_name,
         description="A base ReAct agent built with Google's Agent Development Kit (ADK)",
         extra_packages=extra_packages_list,
@@ -314,6 +313,41 @@ def deploy_agent_engine_app(
         staging_bucket=staging_bucket_uri,
         labels=labels,
     )
+
+    config['context_spec'] = {
+       "memory_bank_config": {
+            "similarity_search_config": {
+                "embedding_model": f"projects/{project}/locations/{location}/publishers/google/models/gemini-embedding-001",
+            },
+            "generation_config": {
+                "model": f"projects/{project}/locations/{location}/publishers/google/models/gemini-2.5-flash",
+            },
+            "customization_configs": [
+               {
+                "memory_topics": [
+                    {"managed_memory_topic": {"managed_topic_enum": "USER_PERSONAL_INFO"}},
+                    {"managed_memory_topic": {"managed_topic_enum": "USER_PREFERENCES"}},
+                    {"managed_memory_topic": {"managed_topic_enum": "KEY_CONVERSATION_DETAILS"}},
+                    {"managed_memory_topic": {"managed_topic_enum": "EXPLICIT_INSTRUCTIONS"}},
+                    {"custom_memory_topic": {
+                        "label": "Location interests",
+                        "description": """Specific interests through user question related to location. Remember all locations by historical order"""}
+                    }
+                ],
+                #"generate_memories_examples": [
+                #]
+                }
+            ],
+            #"ttl_config": {
+            #    "default_ttl": f"TTLs",
+            #    "granular_ttl": {
+            #        "create_ttl": f"CREATE_TTLs",
+            #        "generate_created_ttl": f"GENERATE_CREATED_TTLs",
+            #        "generate_updated_ttl": f"GENERATE_UPDATED_TTLs"
+            #    }
+            #}
+       }
+    }
 
     agent_config = {
         "agent": agent_engine,
