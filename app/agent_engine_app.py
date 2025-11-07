@@ -94,7 +94,7 @@ class CustomMemoryBankService(BaseMemoryService):
               'user_id': session.user_id,
           },
           config={
-             "disable_consolidation": True,     #Disable consolidate to existing memory
+             #"disable_consolidation": True,     #Disable consolidate to existing memory, False by default
              'wait_for_completion': False
              },
       )
@@ -205,8 +205,6 @@ class AgentEngineApp(AdkApp):
            yield item
        session = await super().async_get_session(user_id=user_id, session_id=session_id)
        await self.memory_service.add_session_to_memory(session)
-    
-       
 
 @click.command()
 @click.option(
