@@ -15,7 +15,13 @@
 # mypy: disable-error-code="attr-defined,arg-type"
 import logging
 import os
-from typing import Any
+from typing import (
+    Any,
+    AsyncIterable,
+    Dict,
+    Optional,
+    Union,
+)
 
 import click
 import google.auth
@@ -66,6 +72,8 @@ class CustomMemoryBankService(BaseMemoryService):
   async def add_session_to_memory(self, session: Session):
     if not self._agent_engine_id:
       raise ValueError('Agent Engine ID is required for Memory Bank.')
+    
+    print('[CustomMemoryBankService] add_session_to_memory received.')
 
     events = []
     for event in session.events:
@@ -113,10 +121,10 @@ class CustomMemoryBankService(BaseMemoryService):
         },
     )
 
+    print(f'[CustomMemoryBankService] Retrieving {len(retrieved_memories_iterator)} memories')
     memory_events = []
     for retrieved_memory in retrieved_memories_iterator:
       # TODO: add more complex error handling
-      print('[CustomMemoryBankService] Retrieved memory: %s', retrieved_memory)
       memory_events.append(
           MemoryEntry(
               author='user',
@@ -146,11 +154,15 @@ class AgentEngineApp(AdkApp):
     def set_up(self) -> None:
         """Set up logging and tracing for the agent engine app."""
         #Update memory_bank to point agent engine
+
+        os.environ.setdefault("SPOONACULAR_API_KEY", "352affc29210468ab5b9f62a4f544a8a")
+
         import logging        
         super().set_up()
 
         #TODO: manually update engine_id of memory service after created,
-        self._tmpl_attrs["memory_service"]._agent_engine_id = os.environ.get("GOOGLE_CLOUD_AGENT_ENGINE_ID")
+        self.memory_service = self._tmpl_attrs["memory_service"]
+        self.memory_service._agent_engine_id = os.environ.get("GOOGLE_CLOUD_AGENT_ENGINE_ID")
         
         logging.basicConfig(level=logging.INFO)
         logging_client = google_cloud_logging.Client()
@@ -178,6 +190,23 @@ class AgentEngineApp(AdkApp):
         operations = super().register_operations()
         operations[""] = operations.get("", []) + ["register_feedback"]
         return operations
+    
+    async def async_stream_query(
+        self,
+        *,
+        message: Union[str, Dict[str, Any]],
+        user_id: str,
+        session_id: Optional[str] = None,
+        run_config: Optional[Dict[str, Any]] = None,
+        **kwargs,
+    ) -> AsyncIterable[Dict[str, Any]]:
+       async for item in super().async_stream_query(message=message, user_id=user_id, 
+                                         session_id=session_id, run_config=run_config, **kwargs):
+           yield item
+       session = await super().async_get_session(user_id=user_id, session_id=session_id)
+       await self.memory_service.add_session_to_memory(session)
+    
+       
 
 @click.command()
 @click.option(
@@ -321,7 +350,7 @@ def deploy_agent_engine_app(
     config['context_spec'] = {
        "memory_bank_config": {
             "similarity_search_config": {
-                "embedding_model": f"projects/{project}/locations/{location}/publishers/google/models/gemini-embedding-001",
+                "embedding_model": f"projects/{project}/locations/{location}/publishers/google/models/text-multilingual-embedding-002", #gemini-embedding-001 text-embedding-005
             },
             "generation_config": {
                 "model": f"projects/{project}/locations/{location}/publishers/google/models/gemini-2.5-flash",
@@ -334,8 +363,12 @@ def deploy_agent_engine_app(
                     {"managed_memory_topic": {"managed_topic_enum": "KEY_CONVERSATION_DETAILS"}},
                     {"managed_memory_topic": {"managed_topic_enum": "EXPLICIT_INSTRUCTIONS"}},
                     {"custom_memory_topic": {
-                        "label": "Location interests",
-                        "description": """Specific interests through user question related to location. Remember all locations by historical order"""}
+                        "label": "Ingredient interests",
+                        "description": """Specific interests through user question related to ingredients. Remember all ingredient which user can eat by historical order"""}
+                    },
+                    {"custom_memory_topic": {
+                        "label": "Taste interests",
+                        "description": """Specific interests through user question related to taste like enjoy desert, asian food, meat, sweet, salty and so on. Remember all taste which user prefer by historical order"""}
                     }
                 ],
                 #"generate_memories_examples": [

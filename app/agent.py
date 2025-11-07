@@ -12,63 +12,90 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
-import os
-from zoneinfo import ZoneInfo
-
-import google.auth
 from google.adk.agents import Agent
 from google.adk.tools.preload_memory_tool import preload_memory_tool
 
-_, project_id = google.auth.default()
-os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-os.environ.setdefault("GOOGLE_CLOUD_LOCATION", "global")
-os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
+from .sub_agents.User_Requirement.agent import user_requirement_agent
+from .sub_agents.Recipe_Finder.agent import recipe_finder_agent
+from .sub_agents.Health.agent import health_agent
+from .sub_agents.Final.agent import final_agent
 
-def get_weather(query: str) -> str:
-    """Simulates a web search. Use it get information on weather.
+ROOT_AGENT_INSTR = """
+You are a personalized recipe and dietary planning agent named Diatery_Planner. Your task is to assist users in finding recipes or generating dietary plans based on their requirements.
 
-    Args:
-        query: A string containing the location to get weather information for.
+1. Parse the user's input to extract the following information and format it as JSON:
+   - request_type: "recipe" or "diet_plan"
+   - dietary_goals: e.g., "weight loss", "muscle gain", or null
+   - cuisine: e.g., "Indian", "Italian", or null
+   - diet_type: e.g., "vegetarian", "vegan", "high-protein", or null
+   - ingredients: list of ingredients, e.g., ["chicken", "rice"], or null
+   - allergies: list of allergies, e.g., ["nuts", "dairy"], or null
+   - protein_goal: e.g., "high", "low", or null
+   - conditions: list of health conditions, e.g., ["diabetes"], or null
 
-    Returns:
-        A string with the simulated weather information for the queried location.
-    """
-    if "sf" in query.lower() or "san francisco" in query.lower():
-        return "It's 60 degrees and foggy."
-    return "It's 90 degrees and sunny."
+   Example: For "I want the recipe of chicken biriyani", the JSON should be:
+   ```json
+   {
+     "request_type": "recipe",
+     "dietary_goals": null,
+     "cuisine": "Indian",
+     "diet_type": null,
+     "ingredients": ["chicken", "rice"],
+     "allergies": null,
+     "protein_goal": null,
+     "conditions": null
+   }
+   ```
 
+2. Extract the search query from the user's input (e.g., "chicken biriyani" from "I want the recipe of chicken biriyani") and set it as a context variable named `query`.
 
-def get_current_time(query: str) -> str:
-    """Simulates getting the current time for a city.
+3. Based on the request_type:
+   - If request_type is "recipe":
+     - Delegate the task to the `recipe_finder_agent` with the parsed JSON as the query.
+     - The `recipe_finder_agent` will return a list of recipes. Format the response as follows and send it back to the client:
+       ```
+       Here is your requested recipe:
 
-    Args:
-        city: The name of the city to get the current time for.
+       **{recipe["title"]}**
+       - **URL**: {recipe["url"]}
+       - **Ingredients**: {", ".join(recipe["ingredients"])}
+       - **Protein Content**: {recipe["protein_content"]}
+       - **Description**: {recipe["description"]}
+       ```
+       If no recipes are found, respond with:
+       ```
+       Sorry, I couldn't find a recipe. Please try a different request.
+       ```
+   - If request_type is "diet_plan":
+     - Delegate the task to the appropriate sub-agent (e.g., `health_agent` or `final_agent`) to generate a diet plan.
+     - Format the diet plan response appropriately.
 
-    Returns:
-        A string with the current time information.
-    """
-    if "sf" in query.lower() or "san francisco" in query.lower():
-        tz_identifier = "America/Los_Angeles"
-    else:
-        return f"Sorry, I don't have timezone information for query: {query}."
+4. If the request_type cannot be determined or the input is unclear, ask the user for more details:
+   ```
+   I couldn't understand your request. Could you please provide more details? For example:
+   * "Give me a recipe for chicken curry."
+   * "I need a weekly diet plan for weight loss."
+   * "I want a high-protein vegetarian meal."
+   ```
 
-    tz = ZoneInfo(tz_identifier)
-    now = datetime.datetime.now(tz)
-    return f"The current time for query {query} is {now.strftime('%Y-%m-%d %H:%M:%S %Z%z')}"
+5. If your says 'hello', response with what you can do in kind manner.
 
-async def auto_save_session_to_memory_callback(callback_context):
-    ctx = callback_context._invocation_context
-    await ctx.memory_service.add_session_to_memory(session = ctx.session)
+Ensure all responses are clear, concise, and helpful to the user.
+Answer using user language.
+"""
 
 root_agent = Agent(
     name="root_agent",
     model="gemini-2.5-flash",
-    instruction="You are a helpful AI assistant designed to provide accurate and useful information.",
-    tools=[
-        get_weather, 
-        get_current_time, 
-        preload_memory_tool
+    description="A personalized recipe and dietary planning agent",
+    instruction=ROOT_AGENT_INSTR,
+    sub_agents=[
+        user_requirement_agent,
+        recipe_finder_agent,
+        health_agent,
+        final_agent,
     ],
-    after_agent_callback=auto_save_session_to_memory_callback,  #Call memory_bank every invoke
+    tools=[
+        preload_memory_tool
+    ]
 )
