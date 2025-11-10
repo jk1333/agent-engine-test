@@ -17,7 +17,6 @@ from google.adk.tools.preload_memory_tool import preload_memory_tool
 
 from .sub_agents.User_Requirement.agent import user_requirement_agent
 from .sub_agents.Recipe_Finder.agent import recipe_finder_agent
-from .sub_agents.Health.agent import health_agent
 from .sub_agents.Final.agent import final_agent
 
 ROOT_AGENT_INSTR = """
@@ -57,7 +56,6 @@ You are a personalized recipe and dietary planning agent named Diatery_Planner. 
        Here is your requested recipe:
 
        **{recipe["title"]}**
-       - **URL**: {recipe["url"]}
        - **Ingredients**: {", ".join(recipe["ingredients"])}
        - **Protein Content**: {recipe["protein_content"]}
        - **Description**: {recipe["description"]}
@@ -67,7 +65,7 @@ You are a personalized recipe and dietary planning agent named Diatery_Planner. 
        Sorry, I couldn't find a recipe. Please try a different request.
        ```
    - If request_type is "diet_plan":
-     - Delegate the task to the appropriate sub-agent (e.g., `health_agent` or `final_agent`) to generate a diet plan.
+     - Delegate the task to the appropriate sub-agent (e.g., `final_agent`) to generate a diet plan.
      - Format the diet plan response appropriately.
 
 4. If the request_type cannot be determined or the input is unclear, ask the user for more details:
@@ -92,7 +90,6 @@ root_agent = Agent(
     sub_agents=[
         user_requirement_agent,
         recipe_finder_agent,
-        health_agent,
         final_agent,
     ],
     tools=[

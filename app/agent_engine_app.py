@@ -155,9 +155,7 @@ class AgentEngineApp(AdkApp):
         """Set up logging and tracing for the agent engine app."""
         #Update memory_bank to point agent engine
 
-        os.environ.setdefault("SPOONACULAR_API_KEY", "352affc29210468ab5b9f62a4f544a8a")
-
-        import logging        
+        import logging
         super().set_up()
 
         #TODO: manually update engine_id of memory service after created,
