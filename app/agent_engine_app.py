@@ -314,7 +314,6 @@ def deploy_agent_engine_app(
             db_url=db_url
         )
 
-    root_agent.tools.append(preload_memory_tool)
     agent_engine = AgentEngineApp(
         agent=root_agent,
         artifact_service_builder=lambda: GcsArtifactService(

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from google.adk.agents import Agent
+from google.adk.tools.preload_memory_tool import preload_memory_tool
 
 from sub_agents.User_Requirement.agent import user_requirement_agent
 from sub_agents.Recipe_Finder.agent import recipe_finder_agent
@@ -92,6 +93,7 @@ root_agent = Agent(
         final_agent,
     ],
     tools=[
-        #preload_memory_tool
+        preload_memory_tool,
+        
     ]
 )
