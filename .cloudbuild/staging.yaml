@@ -35,7 +35,7 @@ steps:
           --location ${_REGION} \
           --service-account ${_APP_SA_EMAIL_STAGING} \
           --set-env-vars="COMMIT_SHA=${COMMIT_SHA}" \
-          --db-url="postgresql+pg8000://postgres:1234@35.200.32.222:5432"
+          --db-url="VertexAiSessionService"
     env:
       - 'PATH=/usr/local/bin:/usr/bin:~/.local/bin'
 
