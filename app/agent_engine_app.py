@@ -34,6 +34,8 @@ from vertexai._genai.types import AgentEngine, AgentEngineConfigDict
 from vertexai.agent_engines.templates.adk import AdkApp
 
 from app.agent import root_agent
+from google.adk.tools.preload_memory_tool import preload_memory_tool
+
 from app.utils.deployment import (
     parse_env_vars,
     print_deployment_success,
@@ -312,6 +314,7 @@ def deploy_agent_engine_app(
             db_url=db_url
         )
 
+    root_agent.tools.append(preload_memory_tool)
     agent_engine = AgentEngineApp(
         agent=root_agent,
         artifact_service_builder=lambda: GcsArtifactService(
