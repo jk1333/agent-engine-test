@@ -331,6 +331,7 @@ def deploy_agent_engine_app(
     # Set worker parallelism to 1
     env_vars["NUM_WORKERS"] = "1"
     env_vars["GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY"] = "true"
+    env_vars["OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT"] = "true"
 
     # Common configuration for both create and update operations
     labels: dict[str, str] = {}
