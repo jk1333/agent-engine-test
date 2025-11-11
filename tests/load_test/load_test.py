@@ -59,7 +59,7 @@ class ChatStreamUser(HttpUser):
             "class_method": "async_stream_query",
             "input": {
                 "user_id": "test",
-                "message": "What's the weather in San Francisco?",
+                "message": "김치찌개 레시피를 알려주세요.",
             },
         }
 
