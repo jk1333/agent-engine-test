@@ -309,6 +309,8 @@ def deploy_agent_engine_app(
             location=location
         )
     else:
+        #To connect DB using private network, use following link to setup database
+        #https://cloud.google.com/sql/docs/postgres/configure-private-service-connect?hl=ko
         session_service = functools.partial(
             DatabaseSessionService,
             db_url=db_url
