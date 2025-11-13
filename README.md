@@ -1,17 +1,17 @@
 # agent-engine-test
 
-A base ReAct agent built with Google's Agent Development Kit (ADK)
-Agent generated with [`googleCloudPlatform/agent-starter-pack`](https://github.com/GoogleCloudPlatform/agent-starter-pack) version `0.16.0`
+Google Cloud의 Agent Engine 실습에 사용되는 데모 프로젝트 입니다. Agent 예제는 ['Diatery_Planner'](https://medium.com/google-cloud/diatery-planner-your-ai-powered-recipe-diet-planner-with-googles-adk-5c402802c094)를 참고했습니다. Agent Starter Pack은 다음을 참고합니다. [`googleCloudPlatform/agent-starter-pack`](https://github.com/GoogleCloudPlatform/agent-starter-pack) version `0.16.0`
 
 ## Project Structure
 
-This project is organized as follows:
+폴더 구조는 아래를 따릅니다.:
 
 ```
 agent-engine-test/
-├── app/                 # Core application code
-│   ├── agent.py         # Main agent logic
-│   ├── agent_engine_app.py # Agent Engine application logic
+├── app/                 # Main application code
+│   ├── agent.py         # Main agent (Root agent)
+│   ├── sub_agents/      # Sub agent
+│   ├── agent_engine_app.py # Agent Engine start code
 │   └── utils/           # Utility functions and helpers
 ├── .cloudbuild/         # CI/CD pipeline configurations for Google Cloud Build
 ├── deployment/          # Infrastructure and deployment scripts
@@ -22,75 +22,167 @@ agent-engine-test/
 └── pyproject.toml       # Project dependencies and configuration
 ```
 
-## Requirements
+## Quick Start - Local 테스트
 
-Before you begin, ensure you have:
-- **uv**: Python package manager (used for all dependency management in this project) - [Install](https://docs.astral.sh/uv/getting-started/installation/) ([add packages](https://docs.astral.sh/uv/concepts/dependencies/) with `uv add <package>`)
-- **Google Cloud SDK**: For GCP services - [Install](https://cloud.google.com/sdk/docs/install)
-- **Terraform**: For infrastructure deployment - [Install](https://developer.hashicorp.com/terraform/downloads)
-- **make**: Build automation tool - [Install](https://www.gnu.org/software/make/) (pre-installed on most Unix-based systems)
-
-
-## Quick Start (Local Testing)
-
-Install required packages and launch the local development environment:
+로컬 환경에서는 아래의 명령으로 테스트 환경(adk web)을 실행할 수 있습니다.
 
 ```bash
 make install && make playground
 ```
 
-## Commands
+## Quick Start - Agent Engine 으로 테스트 배포(DEV)
 
-| Command              | Description                                                                                 |
-| -------------------- | ------------------------------------------------------------------------------------------- |
-| `make install`       | Install all required dependencies using uv                                                  |
-| `make playground`    | Launch Streamlit interface for testing agent locally and remotely |
-| `make backend`       | Deploy agent to Agent Engine |
-| `make test`          | Run unit and integration tests                                                              |
-| `make lint`          | Run code quality checks (codespell, ruff, mypy)                                             |
-| `make setup-dev-env` | Set up development environment resources using Terraform                         |
-| `uv run jupyter lab` | Launch Jupyter notebook                                                                     |
-
-For full command options and usage, refer to the [Makefile](Makefile).
-
-
-## Usage
-
-This template follows a "bring your own agent" approach - you focus on your business logic, and the template handles everything else (UI, infrastructure, deployment, monitoring).
-
-1. **Prototype:** Build your Generative AI Agent using the intro notebooks in `notebooks/` for guidance. Use Vertex AI Evaluation to assess performance.
-2. **Integrate:** Import your agent into the app by editing `app/agent.py`.
-3. **Test:** Explore your agent functionality using the Streamlit playground with `make playground`. The playground offers features like chat history, user feedback, and various input types, and automatically reloads your agent on code changes.
-4. **Deploy:** Set up and initiate the CI/CD pipelines, customizing tests as necessary. Refer to the [deployment section](#deployment) for comprehensive instructions. For streamlined infrastructure deployment, simply run `uvx agent-starter-pack setup-cicd`. Check out the [`agent-starter-pack setup-cicd` CLI command](https://googlecloudplatform.github.io/agent-starter-pack/cli/setup_cicd.html). Currently supports GitHub with both Google Cloud Build and GitHub Actions as CI/CD runners.
-5. **Monitor:** Track performance and gather insights using Cloud Logging, Tracing, and the Looker Studio dashboard to iterate on your application.
-
-The project includes a `GEMINI.md` file that provides context for AI tools like Gemini CLI when asking questions about your template.
-
-
-## Deployment
-
-> **Note:** For a streamlined one-command deployment of the entire CI/CD pipeline and infrastructure using Terraform, you can use the [`agent-starter-pack setup-cicd` CLI command](https://googlecloudplatform.github.io/agent-starter-pack/cli/setup_cicd.html). Currently supports GitHub with both Google Cloud Build and GitHub Actions as CI/CD runners.
-
-### Dev Environment
-
-You can test deployment towards a Dev Environment using the following command:
+현재 프로젝트를 테스트 목적으로 Agent Engine 에 배포하고자 한다면 아래의 명령어를 실행 합니다.
 
 ```bash
-gcloud config set project <your-dev-project-id>
 make backend
 ```
 
+## Quick Start - Agent Engine 으로 CI/CD 환경 구축(STG/PRD)
 
-The repository includes a Terraform configuration for the setup of the Dev Google Cloud project.
-See [deployment/README.md](deployment/README.md) for instructions.
+현재 프로젝트를 Agent Engine 으로 CI/CD 시스템을 구축하고자 한다면 아래의 명령어를 실행 합니다.
 
-### Production Deployment
+STG와 PRD 환경은 서로 다른 프로젝트를 이용해야 합니다.
 
-The repository includes a Terraform configuration for the setup of a production Google Cloud project. Refer to [deployment/README.md](deployment/README.md) for detailed instructions on how to deploy the infrastructure and application.
+```bash
+agent-starter-pack setup-cicd --cicd-project [CI/CD 를 수행할 프로젝트ID] --staging-project [STG 환경 프로젝트ID] --prod-project [PRD 환경 프로젝트ID] --repository-name [리포지토리명]
+```
+
+## Commands
+
+| 명령어                | 설명                                                                            |
+| -------------------- | --------------------------------------------------------------------------------|
+| `make install`       | uv 를 이용해 필요한 패키지를 설치합니다.                                           |
+| `make playground`    | Agent 를 로컬에서 테스트할 수 있는 UI를 실행합니다. 좌측 상단에서 App을 선택합니다.  |
+| `make backend`       | 현재의 구성을 Agent Engine 으로 배포합니다.                                        |
+| `make test`          | 유닛 테스트와 통합 테스트를 수행합니다.                                            |
+| `make lint`          | 코드 품질 체크를 실행합니다. (codespell, ruff, mypy)                              |
+| `git push`           | CI/CD 파이프라인을 수행합니다.                                                    |
 
 
-## Monitoring and Observability
-> You can use [this Looker Studio dashboard](https://lookerstudio.google.com/reporting/46b35167-b38b-4e44-bd37-701ef4307418/page/tEnnC
-) template for visualizing events being logged in BigQuery. See the "Setup Instructions" tab to getting started.
+## Qwiklab 실습
 
-The application uses OpenTelemetry for comprehensive observability with all events being sent to Google Cloud Trace and Logging for monitoring and to BigQuery for long term storage.
+아래의 내용은 Qwiklab 환경에서 본 프로젝트를 배포하고 실행하는 과정을 설명합니다.
+
+
+1. 프로젝트에 로그인 한 뒤, 우측 상단의 속성 메뉴에 들어가서 Project settings 를 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/1.png)
+
+2. 메뉴에 들어가면 아래 그림과 같이 Project ID 값을 볼 수 있습니다. 이 값을 메모해 둡니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/2.png)
+
+3. 상단 검색 메뉴에서 'colab' 을 타이핑 하면 검색되는 'Colab Enterprise'를 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/3.png)
+
+4. 만약 아래와 같이 API Enable 이 필요하다고 하면 활성화를 합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/4.png)
+
+5. Import notebooks 를 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/5.png)
+
+6. 아래 그림과 같이 2개의 노트북 주소를 입력하고 Import 버튼을 누릅니다.
+
+```code
+https://github.com/jk1333/agent-engine-test/blob/main/notebooks/agentengine_evaluation.ipynb
+```
+```code
+https://github.com/jk1333/agent-engine-test/blob/main/notebooks/agentengine_testing.ipynb
+```
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/6.png)
+
+7. 좌측의 메뉴에서 My notebooks 를 클릭한 뒤, agentengine_evaluation.ipynb 를 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/7.png)
+
+8. 우측의 연결을 클릭 후 런타임에 연결을 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/8.png)
+
+9. Create new Runtime 을 선택한 후 Create Default Runtime을 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/9.png)
+
+10. Open OAuth popup 이 나오면 Open 을 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/10.png)
+
+11. student- 로 시작하는 계정을 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/11.png)
+
+12. 우측 상단의 연결 중 상태가 지속된다면, 우측 상단에서 런타임에 연결을 클릭한 후 생성된 런타임에 Connect를 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/12.png)
+
+13. 아래 그림과 같이 연결이 완료되기까지 기다립니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/13.png)
+
+14. 연결이 완료되면 아래 그림과 같이 순차적으로 버튼을 클릭합니다. (수행이 완료될때 까지 약 3분정도 필요합니다.)
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/14.png)
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/14-1.png)
+
+15. 수행이 완료되면 메뉴에서 런타임을 클릭 후 세션 다시 시작을 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/15.png)
+
+16. 하단의 터미널을 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/16.png)
+
+17. 터미널이 나오면 아래의 명령어를 순차적으로 입력합니다. (배포가 완료될때 까지 10분 이상 필요합니다.)
+```code
+cd agent-engine-test
+make backend
+```
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/17.png)
+
+18. 배포가 완료되면 아래 그림과 같이 화면이 표시됩니다. Agent Engine ID값을 아래 그림과 확이 확인 후 메모해 둡니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/18.png)
+
+19. 메모한 Project ID와 Agent Engine ID 값을 열려있는 노트북 파일의 3번째 셀의 PROJECT_ID, AGENT_ENGINE_ID 값에 업데이트 합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/19.png)
+
+20. 좌측의 메뉴에서 Agent Engine 을 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/20.png)
+
+21. 배포된 Agent Engine 을 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/21.png)
+
+22. Telemetry API 를 활성화 해야한다는 안내 메세지가 나온다면 Enable 을 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/22.png)
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/22-1.png)
+
+23. Playground 메뉴에 들어가서 다양한 대화를 해봅니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/23.png)
+
+24. 다양한 대화 후 Memories 메뉴에 들어가서 내가 발화한 내용이 메모리로 기억되었는지 확인합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/24.png)
+
+25. Dashboard, Traces, Sessions 메뉴를 클릭하며 기능들을 살펴보도록 합니다.
+
+26. Colab Enterprise 로 돌아와서 마지막 열었던 agentengine_evaluation.ipynb 를 클릭합니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/26.png)
+
+27. 마지막 실행한 다음 셀 부터 실행 버튼을 클릭하며 수행 결과를 살펴봅니다.
+
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/27.png)
+
+28. Evaluation 결과도 살펴봅니다.
+![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/28.png)
