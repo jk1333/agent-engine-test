@@ -65,27 +65,27 @@ agent-starter-pack setup-cicd --cicd-project [CI/CD 를 수행할 프로젝트ID
 아래의 내용은 Qwiklab 환경에서 본 프로젝트를 배포하고 실행하는 과정을 설명합니다.
 
 
-1. 프로젝트에 로그인 한 뒤, 우측 상단의 속성 메뉴에 들어가서 Project settings 를 클릭합니다.
+*1. 프로젝트에 로그인 한 뒤, 우측 상단의 속성 메뉴에 들어가서 Project settings 를 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/1.png)
 
-2. 메뉴에 들어가면 아래 그림과 같이 Project ID 값을 볼 수 있습니다. 이 값을 메모해 둡니다.
+*2. 메뉴에 들어가면 아래 그림과 같이 Project ID 값을 볼 수 있습니다. 이 값을 메모해 둡니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/2.png)
 
-3. 상단 검색 메뉴에서 'colab' 을 타이핑 하면 검색되는 'Colab Enterprise'를 클릭합니다.
+*3. 상단 검색 메뉴에서 'colab' 을 타이핑 하면 검색되는 'Colab Enterprise'를 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/3.png)
 
-4. 만약 아래와 같이 API Enable 이 필요하다고 하면 활성화를 합니다.
+*4. 만약 아래와 같이 API Enable 이 필요하다고 하면 활성화를 합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/4.png)
 
-5. Import notebooks 를 클릭합니다.
+*5. Import notebooks 를 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/5.png)
 
-6. 아래 그림과 같이 2개의 노트북 주소를 입력하고 Import 버튼을 누릅니다.
+*6. 아래 그림과 같이 2개의 노트북 주소를 입력하고 Import 버튼을 누릅니다.
 
 ```code
 https://github.com/jk1333/agent-engine-test/blob/main/notebooks/agentengine_evaluation.ipynb
@@ -95,94 +95,94 @@ https://github.com/jk1333/agent-engine-test/blob/main/notebooks/agentengine_test
 ```
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/6.png)
 
-7. 좌측의 메뉴에서 My notebooks 를 클릭한 뒤, agentengine_evaluation.ipynb 를 클릭합니다.
+*7. 좌측의 메뉴에서 My notebooks 를 클릭한 뒤, agentengine_evaluation.ipynb 를 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/7.png)
 
-8. 우측의 연결을 클릭 후 런타임에 연결을 클릭합니다.
+*8. 우측의 연결을 클릭 후 런타임에 연결을 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/8.png)
 
-9. Create new Runtime 을 선택한 후 Create Default Runtime을 클릭합니다.
+*9. Create new Runtime 을 선택한 후 Create Default Runtime을 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/9.png)
 
-10. Open OAuth popup 이 나오면 Open 을 클릭합니다.
+*10. Open OAuth popup 이 나오면 Open 을 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/10.png)
 
-11. student- 로 시작하는 계정을 클릭합니다.
+*11. student- 로 시작하는 계정을 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/11.png)
 
-12. 우측 상단의 연결 중 상태가 지속된다면, 우측 상단에서 런타임에 연결을 클릭한 후 생성된 런타임에 Connect를 클릭합니다.
+*12. 우측 상단의 연결 중 상태가 지속된다면, 우측 상단에서 런타임에 연결을 클릭한 후 생성된 런타임에 Connect를 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/12.png)
 
-13. 아래 그림과 같이 연결이 완료되기까지 기다립니다.
+*13. 아래 그림과 같이 연결이 완료되기까지 기다립니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/13.png)
 
-14. 연결이 완료되면 아래 그림과 같이 순차적으로 버튼을 클릭합니다. (수행이 완료될때 까지 약 3분정도 필요합니다.)
+*14. 연결이 완료되면 아래 그림과 같이 순차적으로 버튼을 클릭합니다. (수행이 완료될때 까지 약 3분정도 필요합니다.)
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/14.png)
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/14-1.png)
 
-15. 수행이 완료되면 메뉴에서 런타임을 클릭 후 세션 다시 시작을 클릭합니다.
+*15. 수행이 완료되면 메뉴에서 런타임을 클릭 후 세션 다시 시작을 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/15.png)
 
-16. 하단의 터미널을 클릭합니다.
+*16. 하단의 터미널을 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/16.png)
 
-17. 터미널이 나오면 아래의 명령어를 순차적으로 입력합니다. (배포가 완료될때 까지 10분 이상 필요합니다.)
+*17. 터미널이 나오면 아래의 명령어를 순차적으로 입력합니다. (배포가 완료될때 까지 10분 이상 필요합니다.)
 ```code
 cd agent-engine-test
 make backend
 ```
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/17.png)
 
-18. 배포가 완료되면 아래 그림과 같이 화면이 표시됩니다. Agent Engine ID값을 아래 그림과 확이 확인 후 메모해 둡니다.
+*18. 배포가 완료되면 아래 그림과 같이 화면이 표시됩니다. Agent Engine ID값을 아래 그림과 확이 확인 후 메모해 둡니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/18.png)
 
-19. 메모한 Project ID와 Agent Engine ID 값을 열려있는 노트북 파일의 3번째 셀의 PROJECT_ID, AGENT_ENGINE_ID 값에 업데이트 합니다.
+*19. 메모한 Project ID와 Agent Engine ID 값을 열려있는 노트북 파일의 3번째 셀의 PROJECT_ID, AGENT_ENGINE_ID 값에 업데이트 합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/19.png)
 
-20. 좌측의 메뉴에서 Agent Engine 을 클릭합니다.
+*20. 좌측의 메뉴에서 Agent Engine 을 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/20.png)
 
-21. 배포된 Agent Engine 을 클릭합니다.
+*21. 배포된 Agent Engine 을 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/21.png)
 
-22. Telemetry API 를 활성화 해야한다는 안내 메세지가 나온다면 Enable 을 클릭합니다.
+*22. Telemetry API 를 활성화 해야한다는 안내 메세지가 나온다면 Enable 을 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/22.png)
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/22-1.png)
 
-23. Playground 메뉴에 들어가서 다양한 대화를 해봅니다.
+*23. Playground 메뉴에 들어가서 다양한 대화를 해봅니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/23.png)
 
-24. 다양한 대화 후 Memories 메뉴에 들어가서 내가 발화한 내용이 메모리로 기억되었는지 확인합니다.
+*24. 다양한 대화 후 Memories 메뉴에 들어가서 내가 발화한 내용이 메모리로 기억되었는지 확인합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/24.png)
 
-25. Dashboard, Traces, Sessions 메뉴를 클릭하며 기능들을 살펴보도록 합니다.
+*25. Dashboard, Traces, Sessions 메뉴를 클릭하며 기능들을 살펴보도록 합니다.
 
-26. Colab Enterprise 로 돌아와서 마지막 열었던 agentengine_evaluation.ipynb 를 클릭합니다.
+*26. Colab Enterprise 로 돌아와서 마지막 열었던 agentengine_evaluation.ipynb 를 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/26.png)
 
-27. 마지막 실행한 다음 셀 부터 실행 버튼을 클릭하며 수행 결과를 살펴봅니다.
+*27. 마지막 실행한 다음 셀 부터 실행 버튼을 클릭하며 수행 결과를 살펴봅니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/27.png)
 
-28. Evaluation 결과도 살펴봅니다.
+*28. Evaluation 결과도 살펴봅니다.
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/28.png)
