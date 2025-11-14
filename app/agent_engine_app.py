@@ -366,16 +366,21 @@ def deploy_agent_engine_app(
                     {"managed_memory_topic": {"managed_topic_enum": "EXPLICIT_INSTRUCTIONS"}},
                     {"custom_memory_topic": {
                         "label": "Ingredient interests",
-                        "description": """Specific interests through user question related to ingredients. Remember all ingredient which user can eat by historical order"""}
+                        "description": """Specific interests through user question related to ingredients. 
+                        Remember all ingredient which user can eat by historical order"""}
                     },
                     {"custom_memory_topic": {
                         "label": "Taste interests",
-                        "description": """Specific interests through user question related to taste like enjoy desert, asian food, meat, sweet, salty and so on. Remember all taste which user prefer by historical order"""}
+                        "description": """Specific interests through user question related to taste like 
+                        enjoy desert, asian food, meat, sweet, salty and so on. 
+                        Remember all taste which user prefer by historical order"""}
                     }
                 ],
                 #"generate_memories_examples": [
+                #   {"conversationSource": {},
+                #    "generatedMemories": []}
                 #]
-                }
+            }
             ],
             #"ttl_config": {
             #    "default_ttl": f"TTLs",
