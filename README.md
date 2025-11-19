@@ -128,7 +128,7 @@ https://github.com/jk1333/agent-engine-test/blob/main/notebooks/agentengine_test
 ***
 <br>
 
-#### 8. 우측의 연결을 클릭 후 런타임에 연결을 클릭합니다.
+#### 8. 우측의 연결 옆 화살표를 클릭 후 런타임에 연결을 클릭합니다.
 
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/8.png)
 
