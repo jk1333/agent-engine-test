@@ -248,6 +248,11 @@ class AgentEngineApp(AdkApp):
     default=None,
     help="Database URL for the agent engine",
 )
+@click.option(
+    "--model-location",
+    default="global",
+    help="Gemini model location for the agent engine (ADK and Memory Bank, defaults to global)",
+)
 def deploy_agent_engine_app(
     project: str | None,
     location: str,
@@ -257,6 +262,7 @@ def deploy_agent_engine_app(
     set_env_vars: str | None,
     service_account: str | None,
     db_url: str | None,
+    model_location: str | None,
 ) -> AgentEngine:
     """Deploy the agent engine app to Vertex AI."""
     # Parse environment variables if provided
@@ -287,14 +293,14 @@ def deploy_agent_engine_app(
         bucket_name=staging_bucket_uri, project=project, location=location
     )
 
-    # Initialize vertexai client
+    # Initialize vertexai client for agent engine
     client = vertexai.Client(
         project=project,
         location=location,
     )
 
-    # Set location for Gemini api, for memory, only us-central1 supports
-    vertexai.init(project=project, location="us-central1")
+    # Set location for Gemini api, only global supports
+    vertexai.init(project=project, location=model_location)
 
     # Read requirements
     with open(requirements_file) as f:
@@ -352,10 +358,10 @@ def deploy_agent_engine_app(
     config['context_spec'] = {
        "memory_bank_config": {
             "similarity_search_config": {
-                "embedding_model": f"projects/{project}/locations/{location}/publishers/google/models/text-multilingual-embedding-002", #gemini-embedding-001 text-embedding-005
+                "embedding_model": f"projects/{project}/locations/{model_location}/publishers/google/models/text-multilingual-embedding-002", #gemini-embedding-001 text-embedding-005
             },
             "generation_config": {
-                "model": f"projects/{project}/locations/{location}/publishers/google/models/gemini-2.5-flash",
+                "model": f"projects/{project}/locations/{model_location}/publishers/google/models/gemini-2.5-flash",
             },
             "customization_configs": [
                {
