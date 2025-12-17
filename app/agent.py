@@ -18,6 +18,15 @@ from google.adk.tools.preload_memory_tool import preload_memory_tool
 from sub_agents.User_Requirement.agent import user_requirement_agent
 from sub_agents.Recipe_Finder.agent import recipe_finder_agent
 from sub_agents.Final.agent import final_agent
+from google.adk.tools import FunctionTool, ToolContext
+import uuid
+import re
+import tempfile
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+AGENT_AUTH_ID = "my_auth_001"
 
 ROOT_AGENT_INSTR = """
 You are a personalized recipe and dietary planning agent named Diatery_Planner. Your task is to assist users in finding recipes or generating dietary plans based on their requirements.
@@ -82,10 +91,60 @@ Ensure all responses are clear, concise, and helpful to the user.
 Answer using user language.
 """
 
+def get_access_token(tool_context: ToolContext, auth_id: str) -> str | None:
+    #Find value of matched key
+    auth_id_pattern = re.compile(f"temp:{re.escape(auth_id)}(_\\d+)?")
+    state_dict = tool_context.state.to_dict()
+    print(f"Available state keys: {list(state_dict.keys())}")
+    for key, value in state_dict.items():
+        if auth_id_pattern.match(key) and isinstance(value, str):
+            return value
+    return None
+
+def upload_text_to_drive(tool_context: ToolContext, text_content: str) -> str:
+    """Uploads the given text content to a file in Google Drive.
+
+    Args:
+        tool_context: The context object provided by the ADK framework.
+        text_content: The string content to be saved in the text file.
+    """
+    filename = str(uuid.uuid4()) + ".txt"
+
+    file_bytes = text_content.encode("utf-8")
+    mime_type = "text/plain"
+
+    try:
+        # Use OAuth2 credentials from the tool_context        
+        access_token = get_access_token(tool_context, AGENT_AUTH_ID)
+        if not access_token:
+            return (
+                f"❌ Error: OAuth access token not found. "
+                f"Ensure the agent is authorized in Gemini Enterprise with AUTH_ID='{AGENT_AUTH_ID}'. "
+                "The user may need to click 'Authorize' in the Gemini Enterprise UI."
+            )
+        creds = Credentials(token=access_token)
+
+        # creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        service = build("drive", "v3", credentials=creds)
+
+        with tempfile.NamedTemporaryFile(delete=True) as temp_file:
+            temp_file.write(file_bytes)
+            temp_file.flush()
+
+            # By not specifying 'parents', the file is uploaded to the root "My Drive" folder.
+            file_metadata = {"name": filename}
+            media = MediaFileUpload(temp_file.name, mimetype=mime_type)
+            uploaded_file = service.files().create(body=file_metadata, media_body=media, fields="id, name").execute()
+            return f"✅ Successfully uploaded '{uploaded_file.get('name')}' to your Google Drive with File ID: {uploaded_file.get('id')}"
+
+    except Exception as e:
+        print(f"An unexpected error occurred during upload: {e}")
+        return f"❌ An unexpected error occurred during upload: {e}"
+
 root_agent = Agent(
     name="root_agent",
     model="gemini-2.5-flash",
-    description="A personalized recipe and dietary planning agent",
+    description="A personalized recipe and dietary planning agent. Use 'upload_text_to_drive' to save the result",
     instruction=ROOT_AGENT_INSTR,
     sub_agents=[
         user_requirement_agent,
@@ -94,6 +153,7 @@ root_agent = Agent(
     ],
     tools=[
         preload_memory_tool,
+        FunctionTool(upload_text_to_drive)
         
     ]
 )

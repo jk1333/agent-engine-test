@@ -32,6 +32,51 @@ backend:
 	uv export --no-hashes --no-header --no-dev --no-emit-project --no-annotate > .requirements.txt 2>/dev/null || \
 	uv export --no-hashes --no-header --no-dev --no-emit-project > .requirements.txt && uv run app/agent_engine_app.py --location="us-central1" --agent-name="agent-engine-test-dev" --db-url="VertexAiSessionService" --model-location="global"
 
+AUTH_ID_TO_USE := my_auth_001
+CLIENT_ID := CLIENT_ID
+CLIENT_SECRET := SECRET
+GEMINI_ENTERPRISE_REGION := global
+GEMINI_ENTERPRISE_APP_ID := APP_ID
+AGENT_ENGINE_RESOURCE_NAME := FULL_RESOURCE_NAME
+ge-register:
+	$(eval PROJECT_ID := $(shell gcloud config get-value project))
+	$(eval PROJECT_NUMBER := $(shell gcloud projects describe $(PROJECT_ID) --format='value(projectNumber)'))
+	$(eval ACCESS_TOKEN := $(shell gcloud auth print-access-token))
+	curl -X POST \
+	-H "Authorization: Bearer $(ACCESS_TOKEN)" \
+	-H "Content-Type: application/json" \
+	-H "X-Goog-User-Project: $(PROJECT_ID)" \
+	"https://$(GEMINI_ENTERPRISE_REGION)-discoveryengine.googleapis.com/v1alpha/projects/$(PROJECT_ID)/locations/$(GEMINI_ENTERPRISE_REGION)/authorizations?authorizationId=$(AUTH_ID_TO_USE)" \
+	-d '{ \
+		"name": "projects/$(PROJECT_NUMBER)/locations/$(GEMINI_ENTERPRISE_REGION)/authorizations/$(AUTH_ID_TO_USE)", \
+		"serverSideOauth2": { \
+		"clientId": "$(CLIENT_ID)", \
+		"clientSecret": "$(CLIENT_SECRET)", \
+		"authorizationUri": "https://accounts.google.com/o/oauth2/v2/auth?client_id=$(CLIENT_ID)&redirect_uri=https%3A%2F%2Fvertexaisearch.cloud.google.com%2Fstatic%2Foauth%2Foauth.html&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fdrive%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform&include_granted_scopes=true&response_type=code&access_type=offline&prompt=consent", \
+		"tokenUri": "https://oauth2.googleapis.com/token" \
+		} \
+	}'
+
+	curl -X POST \
+	-H "Authorization: Bearer $(ACCESS_TOKEN)" \
+	-H "Content-Type: application/json" \
+	-H "X-Goog-User-Project: filled in at lab start" \
+	"https://$(GEMINI_ENTERPRISE_REGION)-discoveryengine.googleapis.com/v1alpha/projects/$(PROJECT_ID)/locations/$(GEMINI_ENTERPRISE_REGION)/collections/default_collection/engines/$(GEMINI_ENTERPRISE_APP_ID)/assistants/default_assistant/agents" \
+	-d '{ \
+			"displayName": "Custom Agent", \
+			"description": "Links Agent Engine with Gemini Enterprise", \
+			"adk_agent_definition": { \
+			"tool_settings": { \
+				"tool_description": "This tool integrate all tools and agents with Gemini Enterprise" \
+			}, \
+			"provisioned_reasoning_engine": { \
+				"reasoning_engine": "$(AGENT_ENGINE_RESOURCE_NAME)" \
+			}, \
+			"authorizations": [ \
+				"projects/$(PROJECT_NUMBER)/locations/$(GEMINI_ENTERPRISE_REGION)/authorizations/$(AUTH_ID_TO_USE)" \
+			] \
+			} \
+		}'
 
 # ==============================================================================
 # Infrastructure Setup
