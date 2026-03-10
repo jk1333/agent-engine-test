@@ -25,6 +25,9 @@ import tempfile
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+import os
+os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
+os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
 AGENT_AUTH_ID = "my_auth_001"
 
@@ -143,7 +146,7 @@ def upload_text_to_drive(tool_context: ToolContext, text_content: str) -> str:
 
 root_agent = Agent(
     name="root_agent",
-    model="gemini-3.1-flash-lite-preview",
+    model=f"gemini-3.1-flash-lite-preview",
     description="A personalized recipe and dietary planning agent. Use 'upload_text_to_drive' to save the result",
     instruction=ROOT_AGENT_INSTR,
     sub_agents=[

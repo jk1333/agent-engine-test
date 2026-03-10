@@ -1,5 +1,6 @@
 from google.adk.agents import Agent
 from google.adk.tools.preload_memory_tool import preload_memory_tool
+
 FINAL_INSTR = """
 You are a final validation agent responsible for ensuring the recipe or dietary plan output meets user requirements.
 
@@ -19,7 +20,7 @@ Output format:
 """
 
 final_agent = Agent(
-    model="gemini-3.1-flash-lite-preview",
+    model=f"gemini-3.1-flash-lite-preview",
     name="final_agent",
     description="Agent to validate and finalize the recipe or dietary plan output",
     instruction=FINAL_INSTR,

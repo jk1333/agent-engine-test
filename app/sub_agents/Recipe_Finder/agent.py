@@ -121,7 +121,7 @@ def google_search_tool(query: str, tool_context: ToolContext) -> List[Dict[str, 
     return result
 
 recipe_finder_agent = Agent(
-    model="gemini-3.1-flash-lite-preview",
+    model=f"gemini-3.1-flash-lite-preview",
     name="recipe_finder_agent",
     description="Agent to find recipes or generate meal plans using google_search_tool API",
     instruction=RECIPE_FINDER_INSTR,
