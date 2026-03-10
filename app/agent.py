@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import Optional
 from google.adk.agents import Agent
 from google.adk.tools.preload_memory_tool import preload_memory_tool
 
