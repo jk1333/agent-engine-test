@@ -143,7 +143,7 @@ def upload_text_to_drive(tool_context: ToolContext, text_content: str) -> str:
 
 root_agent = Agent(
     name="root_agent",
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite-preview",
     description="A personalized recipe and dietary planning agent. Use 'upload_text_to_drive' to save the result",
     instruction=ROOT_AGENT_INSTR,
     sub_agents=[

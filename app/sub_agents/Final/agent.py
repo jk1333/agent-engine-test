@@ -19,7 +19,7 @@ Output format:
 """
 
 final_agent = Agent(
-    model="gemini-2.5-flash",
+    model="gemini-3.1-flash-lite-preview",
     name="final_agent",
     description="Agent to validate and finalize the recipe or dietary plan output",
     instruction=FINAL_INSTR,
