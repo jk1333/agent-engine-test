@@ -68,7 +68,7 @@ def search_recipes_with_gemini(
                           project=os.environ.get("GOOGLE_CLOUD_PROJECT"), 
                           location=os.environ.get("GOOGLE_CLOUD_LOCATION"))
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite-preview",
         contents=search_prompt,
         config={
             "response_mime_type": "application/json",
