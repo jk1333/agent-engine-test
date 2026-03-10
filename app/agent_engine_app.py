@@ -361,7 +361,7 @@ def deploy_agent_engine_app(
                 "embedding_model": f"projects/{project}/locations/{model_location}/publishers/google/models/text-multilingual-embedding-002", #gemini-embedding-001 text-embedding-005
             },
             "generation_config": {
-                "model": f"projects/{project}/locations/{model_location}/publishers/google/models/gemini-2.5-flash",
+                "model": f"projects/{project}/locations/{model_location}/publishers/google/models/gemini-3.1-flash-lite-preview",
             },
             "customization_configs": [
                {
