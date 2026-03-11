@@ -99,7 +99,7 @@ def get_access_token(tool_context: ToolContext, auth_id: str) -> str | None:
     #Find value of matched key
     auth_id_pattern = re.compile(f"temp:{re.escape(auth_id)}(_\\d+)?")
     state_dict = tool_context.state.to_dict()
-    print(f"Available state keys: {list(state_dict.keys())}")
+    print(f"[upload_text_to_drive] Available state keys: {list(state_dict.keys())}")
     for key, value in state_dict.items():
         if auth_id_pattern.match(key) and isinstance(value, str):
             return value
@@ -117,10 +117,13 @@ def upload_text_to_drive(tool_context: ToolContext, text_content: str) -> str:
     file_bytes = text_content.encode("utf-8")
     mime_type = "text/plain"
 
+    print(f"[upload_text_to_drive] try saving {text_content} to {filename}")
+
     try:
         # Use OAuth2 credentials from the tool_context        
         access_token = get_access_token(tool_context, AGENT_AUTH_ID)
         if not access_token:
+            print("[upload_text_to_drive] access token not found")
             return (
                 f"❌ Error: OAuth access token not found. "
                 f"Ensure the agent is authorized in Gemini Enterprise with AUTH_ID='{AGENT_AUTH_ID}'. "
@@ -139,10 +142,11 @@ def upload_text_to_drive(tool_context: ToolContext, text_content: str) -> str:
             file_metadata = {"name": filename}
             media = MediaFileUpload(temp_file.name, mimetype=mime_type)
             uploaded_file = service.files().create(body=file_metadata, media_body=media, fields="id, name").execute()
+            print("[upload_text_to_drive] successfully uploaded")
             return f"✅ Successfully uploaded '{uploaded_file.get('name')}' to your Google Drive with File ID: {uploaded_file.get('id')}"
 
     except Exception as e:
-        print(f"An unexpected error occurred during upload: {e}")
+        print(f"[upload_text_to_drive] upload failed: {e}")
         return f"❌ An unexpected error occurred during upload: {e}"
 
 root_agent = Agent(
