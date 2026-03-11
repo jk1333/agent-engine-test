@@ -174,6 +174,9 @@ https://vertexaisearch.cloud.google.com/oauth-redirect
 ```
 
 #### 18. 17에서 획득한 정보로 Makefile 을 업데이트 합니다.
+CLIENT_ID := CLIENT_ID
+CLIENT_SECRET := SECRET
+AGENT_ENGINE_RESOURCE_NAME := FULL_RESOURCE_NAME
 
 #### 19. make ge-register
 
