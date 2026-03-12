@@ -14,5 +14,4 @@
 import sys
 sys.path.append('/code/app/')
 from .agent import root_agent
-
 __all__ = ["root_agent"]

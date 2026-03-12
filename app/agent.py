@@ -15,9 +15,6 @@
 from google.adk.agents import Agent
 from google.adk.tools.preload_memory_tool import preload_memory_tool
 
-from user_requirement_agent import user_requirement_agent
-from recipe_finder_agent import recipe_finder_agent
-from final_agent import final_agent
 from google.adk.tools import FunctionTool, ToolContext
 import uuid
 import re
@@ -26,11 +23,175 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import os
+
 os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
 AGENT_AUTH_ID = "my_auth_001"
 
+
+def get_access_token(tool_context: ToolContext, auth_id: str) -> str | None:
+    #Find value of matched key
+    auth_id_pattern = re.compile(f"temp:{re.escape(auth_id)}(_\\d+)?")
+    state_dict = tool_context.state.to_dict()
+    print(f"[upload_text_to_drive] Available state keys: {list(state_dict.keys())}")
+    for key, value in state_dict.items():
+        if auth_id_pattern.match(key) and isinstance(value, str):
+            return value
+    return None
+
+def upload_text_to_drive(tool_context: ToolContext, text_content: str) -> str:
+    """Uploads the given text content to a file in Google Drive.
+
+    Args:
+        tool_context: The context object provided by the ADK framework.
+        text_content: The string content to be saved in the text file.
+    """
+    filename = str(uuid.uuid4()) + ".txt"
+
+    file_bytes = text_content.encode("utf-8")
+    mime_type = "text/plain"
+
+    print(f"[upload_text_to_drive] try saving {text_content} to {filename}")
+
+    try:
+        # Use OAuth2 credentials from the tool_context        
+        access_token = get_access_token(tool_context, AGENT_AUTH_ID)
+        if not access_token:
+            print("[upload_text_to_drive] access token not found")
+            return (
+                f"❌ Error: OAuth access token not found. "
+                f"Ensure the agent is authorized in Gemini Enterprise with AUTH_ID='{AGENT_AUTH_ID}'. "
+                "The user may need to click 'Authorize' in the Gemini Enterprise UI."
+            )
+        creds = Credentials(token=access_token)
+
+        # creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+        service = build("drive", "v3", credentials=creds)
+
+        with tempfile.NamedTemporaryFile(delete=True) as temp_file:
+            temp_file.write(file_bytes)
+            temp_file.flush()
+
+            # By not specifying 'parents', the file is uploaded to the root "My Drive" folder.
+            file_metadata = {"name": filename}
+            media = MediaFileUpload(temp_file.name, mimetype=mime_type)
+            uploaded_file = service.files().create(body=file_metadata, media_body=media, fields="id, name").execute()
+            print("[upload_text_to_drive] successfully uploaded")
+            return f"✅ Successfully uploaded '{uploaded_file.get('name')}' to your Google Drive with File ID: {uploaded_file.get('id')}"
+
+    except Exception as e:
+        print(f"[upload_text_to_drive] upload failed: {e}")
+        return f"❌ An unexpected error occurred during upload: {e}"
+
+
+#========================= Definition of Final Agent
+FINAL_INSTR = """
+You are a final validation agent responsible for ensuring the recipe or dietary plan output meets user requirements.
+
+Steps:
+1. Access the session state to retrieve 'filtered_recipes' (for recipes) or 'filtered_meal_plan' (for dietary plans).
+2. Check the session state for 'finder_error' or 'health_errors'. If either is present and the data ('filtered_recipes' or 'filtered_meal_plan') is empty, store the error message in the session state under 'final_error' (e.g., "Final validation failed: {session_state['finder_error'] or session_state['health_errors']}.") and return the error message as a string.
+3. Compare the output against 'user_requirements' to ensure alignment with dietary goals, cuisine, diet type, and other constraints:
+   - For dietary plans, ensure each meal meets the protein goal (e.g., if 'protein_goal' is "20g per meal", verify each meal has at least 20g of protein).
+4. If the output does not meet requirements (e.g., insufficient protein, wrong cuisine), store a message in the session state under 'final_error' (e.g., "The plan does not meet your protein goal of 20g per meal.") and return the message as a string.
+5. If the output is valid, format it for user presentation and store it in the session state under 'final_output'.
+
+Output format:
+- For recipes: A formatted recipe with name, ingredients, instructions, and nutritional info.
+- For meal plans: A formatted plan with meals for each day/week, including nutritional summaries.
+- If an error occurs or refinement is needed, return the error message as a string (e.g., "The plan does not meet your protein goal of 20g per meal.").
+- Answer using user language.
+"""
+final_agent = Agent(
+    model=f"gemini-3.1-flash-lite-preview",
+    name="final_agent",
+    description="Agent to validate and finalize the recipe or dietary plan output",
+    instruction=FINAL_INSTR,
+    tools=[
+        preload_memory_tool
+    ]
+)
+
+#========================= Definition of Recipe generator Agent
+RECIPE_GENERATOR_INSTR = """
+You are a recipe generator agent responsible for creating recipes or generating meal plans.
+
+Steps:
+1. Access the user requirements from the session state under 'user_requirements' not calling agent.
+2. Based on the 'request_type':
+   - If 'recipe':
+     - Use your own knowledge to generate for recipes matching the user's query, cuisine, diet type, and allergies.
+     - Limit to 10 results.
+     - Store the results in the session state under 'recipes'.
+   - If 'dietary_plan':
+     - Use your own knowledge to generate a meal plan for the specified time frame (day or week).
+     - Include parameters like target calories, diet type, and excluded ingredients (allergies).
+     - Store the meal plan in the session state under 'meal_plan'.
+3. If no suitable recipes or meal plan can be found, return an error message to the user.
+
+Output format:
+- For recipes: Store in session state as a list of recipe dictionaries under 'recipes' and transer this 'recipes' data to final agent.
+- For meal plans: Store in session state as a dictionary under 'meal_plan'.
+- If an error occurs, return a message (e.g., "No recipes found matching your criteria.").
+- Answer using user language.
+"""
+recipe_finder_agent = Agent(
+    model=f"gemini-3.1-flash-lite-preview",
+    name="recipe_finder_agent",
+    description="Agent to generate recipes or generate meal plans by user request",
+    instruction=RECIPE_GENERATOR_INSTR,
+    tools=[
+        preload_memory_tool
+    ],
+)
+
+#========================= Definition of User Requirement Agent
+USER_REQUIREMENT_INSTR = """
+You are a user requirement gathering agent for a personalized recipe and dietary planning system.
+Your role is to extract and process user preferences and constraints from their query, including:
+- Dietary goals (e.g., weight loss, muscle gain).
+- Cuisine preferences (e.g., Italian, Indian).
+- Diet type (e.g., vegetarian, keto).
+- Available ingredients (e.g., chicken, rice).
+- Allergies (e.g., nuts, dairy).
+- Protein goals (e.g., 100g/day).
+- Other conditions (e.g., diabetes).
+
+Steps:
+1. Analyze the user's query to identify the request type:
+   - If the user asks for a single recipe (e.g., "Give me a recipe for chicken curry"), set 'request_type' to 'recipe'.
+   - If the user asks for a dietary plan (e.g., "I need a weekly diet plan for weight loss"), set 'request_type' to 'dietary_plan'.
+2. Extract relevant preferences and constraints, storing them in a structured format.
+3. If critical information is missing (e.g., calorie goals for a dietary plan), prompt the user for clarification.
+4. Store the extracted data in the session state under 'user_requirements'.
+
+Output format:
+- Store in the session state as a dictionary:
+  {
+    "request_type": "recipe" or "dietary_plan",
+    "dietary_goals": str,
+    "cuisine": str,
+    "diet_type": str,
+    "ingredients": list,
+    "allergies": list,
+    "protein_goal": str,
+    "conditions": list
+  }
+- If clarification is needed, return a prompt to the user (e.g., "Please specify your daily calorie goal for the dietary plan.").
+- Answer using user language.
+"""
+user_requirement_agent = Agent(
+    model=f"gemini-3.1-flash-lite-preview",
+    name="user_requirement_agent",
+    description="Agent to gather user dietary preferences and constraints",
+    instruction=USER_REQUIREMENT_INSTR,
+    tools=[
+        preload_memory_tool
+    ]
+)
+
+#============================ Definition of root agent
 ROOT_AGENT_INSTR = """
 You are a personalized recipe and dietary planning agent named Diatery_Planner. Your task is to assist users in finding recipes or generating dietary plans based on their requirements.
 
@@ -93,61 +254,6 @@ You are a personalized recipe and dietary planning agent named Diatery_Planner. 
 Ensure all responses are clear, concise, and helpful to the user.
 Answer using user language.
 """
-
-def get_access_token(tool_context: ToolContext, auth_id: str) -> str | None:
-    #Find value of matched key
-    auth_id_pattern = re.compile(f"temp:{re.escape(auth_id)}(_\\d+)?")
-    state_dict = tool_context.state.to_dict()
-    print(f"[upload_text_to_drive] Available state keys: {list(state_dict.keys())}")
-    for key, value in state_dict.items():
-        if auth_id_pattern.match(key) and isinstance(value, str):
-            return value
-    return None
-
-def upload_text_to_drive(tool_context: ToolContext, text_content: str) -> str:
-    """Uploads the given text content to a file in Google Drive.
-
-    Args:
-        tool_context: The context object provided by the ADK framework.
-        text_content: The string content to be saved in the text file.
-    """
-    filename = str(uuid.uuid4()) + ".txt"
-
-    file_bytes = text_content.encode("utf-8")
-    mime_type = "text/plain"
-
-    print(f"[upload_text_to_drive] try saving {text_content} to {filename}")
-
-    try:
-        # Use OAuth2 credentials from the tool_context        
-        access_token = get_access_token(tool_context, AGENT_AUTH_ID)
-        if not access_token:
-            print("[upload_text_to_drive] access token not found")
-            return (
-                f"❌ Error: OAuth access token not found. "
-                f"Ensure the agent is authorized in Gemini Enterprise with AUTH_ID='{AGENT_AUTH_ID}'. "
-                "The user may need to click 'Authorize' in the Gemini Enterprise UI."
-            )
-        creds = Credentials(token=access_token)
-
-        # creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-        service = build("drive", "v3", credentials=creds)
-
-        with tempfile.NamedTemporaryFile(delete=True) as temp_file:
-            temp_file.write(file_bytes)
-            temp_file.flush()
-
-            # By not specifying 'parents', the file is uploaded to the root "My Drive" folder.
-            file_metadata = {"name": filename}
-            media = MediaFileUpload(temp_file.name, mimetype=mime_type)
-            uploaded_file = service.files().create(body=file_metadata, media_body=media, fields="id, name").execute()
-            print("[upload_text_to_drive] successfully uploaded")
-            return f"✅ Successfully uploaded '{uploaded_file.get('name')}' to your Google Drive with File ID: {uploaded_file.get('id')}"
-
-    except Exception as e:
-        print(f"[upload_text_to_drive] upload failed: {e}")
-        return f"❌ An unexpected error occurred during upload: {e}"
-
 root_agent = Agent(
     name="root_agent",
     model=f"gemini-3.1-flash-lite-preview",
