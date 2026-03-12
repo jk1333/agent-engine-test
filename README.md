@@ -161,11 +161,7 @@ Session 3 예시: 다시 소고기 메뉴를 추천해 주세요.
 (Evaluation Dataset 이란 글자만 출력된다면 셀을 다시 실행해 주세요.)
 ![image](https://raw.githubusercontent.com/jk1333/handson/main/images/4/28.png)
 
-#### 15. Google Cloud 콘솔에서 Gemini Enterprise 를 검색 후 메뉴로 진입합니다.
-
-#### 16. Gemini Enterprise 메뉴의 Settings 로 진입하여 Authentication 부분에 global 의 설정메뉴 진입 후 Google Identity 를 설정합니다.
-
-#### 17. OAuth 를 생성 후 CLIENT_ID, CLIENT_SECRET 정보를 기록합니다.
+#### 15. OAuth 를 생성 후 CLIENT_ID, CLIENT_SECRET 정보를 기록합니다.
 Application type: Web application
 
 Authorized redirect URI 는 다음을 입력합니다.
@@ -173,10 +169,14 @@ Authorized redirect URI 는 다음을 입력합니다.
 https://vertexaisearch.cloud.google.com/oauth-redirect
 ```
 
-#### 18. 17에서 획득한 정보로 Makefile 을 업데이트 합니다.
+#### 16. 15에서 획득한 정보 및 Agent Engine 의 Resource Name을 취득하여 Makefile 을 업데이트 합니다.
 CLIENT_ID := CLIENT_ID
 CLIENT_SECRET := SECRET
 AGENT_ENGINE_RESOURCE_NAME := FULL_RESOURCE_NAME
+
+#### 17. Google Cloud 콘솔에서 Gemini Enterprise 를 검색 후 메뉴로 진입합니다.
+
+#### 18. Gemini Enterprise 메뉴의 Settings 로 진입하여 Authentication 부분에 global 의 설정메뉴 진입 후 Google Identity 를 설정합니다.
 
 #### 19. make ge-register
 
