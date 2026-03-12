@@ -28,7 +28,7 @@ from google.genai import types
 os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
 
-AGENT_AUTH_ID = "my_auth_001"
+AGENT_AUTH_ID = "dietary_planner"
 
 retry_config = types.GenerateContentConfig(
         http_options=types.HttpOptions(

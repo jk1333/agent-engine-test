@@ -178,12 +178,14 @@ AGENT_ENGINE_RESOURCE_NAME := FULL_RESOURCE_NAME
 
 #### 18. Gemini Enterprise 메뉴의 Settings 로 진입하여 Authentication 부분에 global 의 설정메뉴 진입 후 Google Identity 를 설정합니다.
 
-#### 19. make ge-register
+#### 19. Google Drive Data Store 연동
 
-#### 20. GE 메뉴에서 에이전트를 클릭, 에이전트와 대화합니다.
+#### 20. make ge-register
 
-#### 21. GE 메뉴에서 @로 에이전트를 호출, 에이전트와 대화합니다.
+#### 21. GE 메뉴에서 에이전트를 클릭, 에이전트와 대화합니다.
 
-#### 22. drive.google.com 에 들어가서 파일이 생성됐는지 확인합니다.
+#### 22. GE 메뉴에서 @로 에이전트를 호출, 에이전트와 대화합니다.
 
-#### 23. data store 로 google drive 연결 후 쿼리를 진행해 봅니다.
+#### 23. drive.google.com 에 들어가서 파일이 생성됐는지 확인합니다.
+
+#### 24. data store 로 google drive 연결 후 쿼리를 진행해 봅니다.

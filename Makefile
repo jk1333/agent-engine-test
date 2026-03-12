@@ -32,7 +32,7 @@ backend:
 	uv export --no-hashes --no-header --no-dev --no-emit-project --no-annotate > .requirements.txt 2>/dev/null || \
 	uv export --no-hashes --no-header --no-dev --no-emit-project > .requirements.txt && uv run app/agent_engine_app.py --location="us-central1" --agent-name="agent-engine-test-dev" --db-url="VertexAiSessionService" --model-location="global"
 
-AUTH_ID_TO_USE := my_auth_001
+AUTH_ID_TO_USE := dietary_planner
 CLIENT_ID := CLIENT_ID
 CLIENT_SECRET := SECRET
 GEMINI_ENTERPRISE_REGION := global
