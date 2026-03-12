@@ -42,13 +42,14 @@ retry_config = types.GenerateContentConfig(
 
 def get_access_token(tool_context: ToolContext, auth_id: str) -> str | None:
     #Find value of matched key
-    auth_id_pattern = re.compile(f"temp:{re.escape(auth_id)}(_\\d+)?")
-    state_dict = tool_context.state.to_dict()
-    print(f"[upload_text_to_drive] Available state keys: {list(state_dict.keys())}")
-    for key, value in state_dict.items():
-        if auth_id_pattern.match(key) and isinstance(value, str):
-            return value
-    return None
+    #auth_id_pattern = re.compile(f"temp:{re.escape(auth_id)}(_\\d+)?")
+    #state_dict = tool_context.state.to_dict()
+    #print(f"[upload_text_to_drive] Available state keys: {list(state_dict.keys())}")
+    #for key, value in state_dict.items():
+    #    if auth_id_pattern.match(key) and isinstance(value, str):
+    #        return value
+    #return None
+    return tool_context.state.get(auth_id, None)
 
 def upload_text_to_drive(tool_context: ToolContext, text_content: str) -> str:
     """Uploads the given text content to a file in Google Drive.
