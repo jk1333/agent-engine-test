@@ -15,9 +15,9 @@
 from google.adk.agents import Agent
 from google.adk.tools.preload_memory_tool import preload_memory_tool
 
-from .user_requirement_agent import user_requirement_agent
-from .recipe_finder_agent import recipe_finder_agent
-from .final_agent import final_agent
+from user_requirement_agent import user_requirement_agent
+from recipe_finder_agent import recipe_finder_agent
+from final_agent import final_agent
 from google.adk.tools import FunctionTool, ToolContext
 import uuid
 import re
