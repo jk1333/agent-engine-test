@@ -32,12 +32,14 @@ backend:
 	uv export --no-hashes --no-header --no-dev --no-emit-project --no-annotate > .requirements.txt 2>/dev/null || \
 	uv export --no-hashes --no-header --no-dev --no-emit-project > .requirements.txt && uv run app/agent_engine_app.py --location="us-central1" --agent-name="agent-engine-test-dev" --db-url="VertexAiSessionService" --model-location="global"
 
-AUTH_ID_TO_USE := dietary_planner
 CLIENT_ID := CLIENT_ID
 CLIENT_SECRET := SECRET
+AGENT_ENGINE_RESOURCE_NAME := FULL_RESOURCE_NAME
+
+AUTH_ID_TO_USE := dietary_planner
 GEMINI_ENTERPRISE_REGION := global
 GEMINI_ENTERPRISE_APP_ID := agent-portal
-AGENT_ENGINE_RESOURCE_NAME := FULL_RESOURCE_NAME
+
 ge-register:
 	$(eval PROJECT_ID := $(shell gcloud config get-value project))
 	$(eval PROJECT_NUMBER := $(shell gcloud projects describe $(PROJECT_ID) --format='value(projectNumber)'))
